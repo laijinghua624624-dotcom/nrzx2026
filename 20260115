@@ -5691,32 +5691,44 @@
         }
 
         function deleteEmployee(employeeId, groupKey) {
-            showConfirmModal(
-                '删除员工',
-                `确定要删除员工 ${getEmployeeById(employeeId).name} 吗？系统将自动调整今日及往后的排班。`,
-                function() {
-                    const group = groups[groupKey];
-                    const index = group.members.findIndex(m => m.id === employeeId);
-                    
-                    if (index !== -1) {
-                        // 标记员工为非激活状态
-                        group.members[index].active = false;
-                        
-                        // 重新生成今日及往后的排班
-                        updateFutureSchedules();
-                        
-                        // 更新显示
-                        renderCalendar();
-                        renderGroupOverview();
-                        renderEmployeeList();
-                        updateStatistics();
-                        saveAllData();
-                        
-                        showNotification('员工已删除，排班已自动调整', 'success');
-                    }
-                }
-            );
+    const employee = getEmployeeById(employeeId);
+    const employeeName = employee ? employee.name : '未知员工';
+    
+    showConfirmModal(
+        '删除员工',
+        `确定要彻底删除员工 ${employeeName} 吗？此操作不可恢复。`,
+        function() {
+            const group = groups[groupKey];
+            const index = group.members.findIndex(m => m.id === employeeId);
+            
+            if (index !== -1) {
+                // 彻底删除员工（不是标记为非活跃）
+                group.members.splice(index, 1);
+                
+                // 重新生成今日及往后的排班
+                updateFutureSchedules();
+                
+                // 更新显示
+                renderCalendar();
+                renderGroupOverview();
+                renderEmployeeList();
+                updateStatistics();
+                saveAllData();
+                
+                // 记录历史
+                scheduleHistory.push({
+                    action: '删除员工',
+                    timestamp: new Date(),
+                    details: `彻底删除了员工 ${employeeName}`
+                });
+                
+                renderScheduleHistory();
+                
+                showNotification('员工已彻底删除，排班已自动调整', 'success');
+            }
         }
+    );
+}
 
         // 保存系统设置
         function saveSystemSettings() {
