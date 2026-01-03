@@ -5597,7 +5597,121 @@
             
             showNotification('排班已更新并发送通知', 'success');
         }
-
+        // 添加或编辑员工
+    function addEmployee(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('employeeName').value.trim();
+    const groupKey = document.getElementById('employeeGroup').value;
+    const phone = document.getElementById('employeePhone').value;
+    const email = document.getElementById('employeeEmail').value;
+    const active = document.getElementById('employeeActive').checked;
+    
+    if (!name) {
+        showNotification('请输入员工姓名', 'warning');
+        return;
+    }
+    
+    // 检查是否是编辑模式
+    const editEmployeeId = document.getElementById('editEmployeeId');
+    const originalGroup = document.getElementById('editEmployeeOriginalGroup');
+    
+    if (editEmployeeId && editEmployeeId.value) {
+        // 编辑模式
+        const employeeId = parseInt(editEmployeeId.value);
+        const originalGroupKey = originalGroup ? originalGroup.value : null;
+        const employee = getEmployeeById(employeeId);
+        
+        if (!employee) {
+            showNotification('员工不存在', 'error');
+            return;
+        }
+        
+        // 更新员工信息
+        employee.name = name;
+        employee.phone = phone;
+        employee.email = email;
+        employee.active = active;
+        
+        // 如果组别发生变化，移动员工到新组别
+        if (originalGroupKey && groupKey !== originalGroupKey) {
+            // 从原组别中移除
+            const oldGroup = groups[originalGroupKey];
+            const oldIndex = oldGroup.members.findIndex(m => m.id === employeeId);
+            if (oldIndex !== -1) {
+                oldGroup.members.splice(oldIndex, 1);
+            }
+            
+            // 添加到新组别
+            groups[groupKey].members.push(employee);
+        }
+        
+        // 重新生成今日及往后的排班
+        updateFutureSchedules();
+        
+        // 更新显示
+        renderCalendar();
+        renderGroupOverview();
+        renderEmployeeList();
+        updateStatistics();
+        saveAllData();
+        
+        // 记录历史
+        scheduleHistory.push({
+            action: '编辑员工',
+            timestamp: new Date(),
+            details: `修改了员工 ${name} 的信息`
+        });
+        
+        renderScheduleHistory();
+        
+        // 重置表单到添加模式
+        cancelEditEmployee();
+        
+        showNotification('员工信息已更新，排班已自动调整', 'success');
+    } else {
+        // 添加模式
+        // 生成新员工ID
+        let maxId = 0;
+        Object.keys(groups).forEach(key => {
+            groups[key].members.forEach(member => {
+                if (member.id > maxId) maxId = member.id;
+            });
+        });
+        
+        const newId = maxId + 1;
+        const avatar = name.charAt(0);
+        
+        // 添加新员工
+        groups[groupKey].members.push({
+            id: newId,
+            name: name,
+            avatar: avatar,
+            active: active,
+            phone: phone,
+            email: email,
+            workDays: 0,
+            leaveDays: 0,
+            travelDays: 0,
+            lastShift: null
+        });
+        
+        // 重新生成今日及往后的排班
+        updateFutureSchedules();
+        
+        // 更新显示
+        renderCalendar();
+        renderGroupOverview();
+        renderEmployeeList();
+        updateStatistics();
+        saveAllData();
+        
+        // 重置表单
+        document.getElementById('employeeForm').reset();
+        
+        showNotification('员工添加成功，排班已自动更新', 'success');
+    }
+}
         // 人员管理功能
         function addEmployee(event) {
             event.preventDefault();
@@ -5691,44 +5805,95 @@
         }
 
         function deleteEmployee(employeeId, groupKey) {
-    const employee = getEmployeeById(employeeId);
-    const employeeName = employee ? employee.name : '未知员工';
+            showConfirmModal(
+                '删除员工',
+                `确定要删除员工 ${getEmployeeById(employeeId).name} 吗？系统将自动调整今日及往后的排班。`,
+                function() {
+                    const group = groups[groupKey];
+                    const index = group.members.findIndex(m => m.id === employeeId);
+                    
+                    if (index !== -1) {
+                        // 标记员工为非激活状态
+                        group.members[index].active = false;
+                        
+                        // 重新生成今日及往后的排班
+                        updateFutureSchedules();
+                        
+                        // 更新显示
+                        renderCalendar();
+                        renderGroupOverview();
+                        renderEmployeeList();
+                        updateStatistics();
+                        saveAllData();
+                        
+                        showNotification('员工已删除，排班已自动调整', 'success');
+                        // 编辑员工信息
+        function editEmployee(employeeId, groupKey) {
+            const employee = getEmployeeById(employeeId);
+            if (!employee) return;
     
-    showConfirmModal(
-        '删除员工',
-        `确定要彻底删除员工 ${employeeName} 吗？此操作不可恢复。`,
-        function() {
-            const group = groups[groupKey];
-            const index = group.members.findIndex(m => m.id === employeeId);
-            
-            if (index !== -1) {
-                // 彻底删除员工（不是标记为非活跃）
-                group.members.splice(index, 1);
-                
-                // 重新生成今日及往后的排班
-                updateFutureSchedules();
-                
-                // 更新显示
-                renderCalendar();
-                renderGroupOverview();
-                renderEmployeeList();
-                updateStatistics();
-                saveAllData();
-                
-                // 记录历史
-                scheduleHistory.push({
-                    action: '删除员工',
-                    timestamp: new Date(),
-                    details: `彻底删除了员工 ${employeeName}`
-                });
-                
-                renderScheduleHistory();
-                
-                showNotification('员工已彻底删除，排班已自动调整', 'success');
-            }
-        }
-    );
+                        // 填充表单到编辑模式
+    document.getElementById('employeeName').value = employee.name;
+    document.getElementById('employeeGroup').value = groupKey;
+    document.getElementById('employeePhone').value = employee.phone;
+    document.getElementById('employeeEmail').value = employee.email;
+    document.getElementById('employeeActive').checked = employee.active;
+    
+                        // 修改表单标题和按钮
+    document.querySelector('#employee-management h6').textContent = '编辑人员';
+    const submitBtn = document.querySelector('#employeeForm button[type="submit"]');
+    submitBtn.textContent = '更新员工信息';
+    submitBtn.classList.remove('btn-primary');
+    submitBtn.classList.add('btn-warning');
+    
+                        // 添加隐藏字段存储编辑状态
+    let hiddenInput = document.getElementById('editEmployeeId');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'editEmployeeId';
+        hiddenInput.value = employeeId;
+        document.getElementById('employeeForm').appendChild(hiddenInput);
+    } else {
+        hiddenInput.value = employeeId;
+    }
+    
+                        // 添加隐藏字段存储原组别
+    let hiddenGroup = document.getElementById('editEmployeeOriginalGroup');
+    if (!hiddenGroup) {
+        hiddenGroup = document.createElement('input');
+        hiddenGroup.type = 'hidden';
+        hiddenGroup.id = 'editEmployeeOriginalGroup';
+        hiddenGroup.value = groupKey;
+        document.getElementById('employeeForm').appendChild(hiddenGroup);
+    } else {
+        hiddenGroup.value = groupKey;
+    }
+    
+                          // 滚动到表单位置
+    document.getElementById('employeeForm').scrollIntoView({ behavior: 'smooth' });
 }
+
+                          // 取消编辑
+function cancelEditEmployee() {
+                          // 重置表单
+    document.getElementById('employeeForm').reset();
+    document.querySelector('#employee-management h6').textContent = '添加人员';
+    const submitBtn = document.querySelector('#employeeForm button[type="submit"]');
+    submitBtn.textContent = '添加员工';
+    submitBtn.classList.remove('btn-warning');
+    submitBtn.classList.add('btn-primary');
+    
+                          // 移除隐藏字段
+    const hiddenInput = document.getElementById('editEmployeeId');
+    if (hiddenInput) hiddenInput.remove();
+    const hiddenGroup = document.getElementById('editEmployeeOriginalGroup');
+    if (hiddenGroup) hiddenGroup.remove();
+}
+                    }
+                }
+            );
+        }
 
         // 保存系统设置
         function saveSystemSettings() {
