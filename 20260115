@@ -895,63 +895,71 @@
                     </div>
                 </div>
                 
-                <!-- 待发送通知 -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-bell me-2"></i>待发送通知
-                    </div>
-                    <div class="card-body">
-                        <div id="pendingNotifications">
-                            <p class="text-muted small mb-0">暂无待发送通知</p>
-                        </div>
-                    </div>
+// 原来的内容（约897-952行）
+<div class="tab-pane fade" id="email-settings" role="tabpanel">
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        使用EmailJS服务发送邮件，需要先注册 <a href="https://www.emailjs.com" target="_blank">EmailJS</a> 账号并配置邮件模板。
+    </div>
+    
+    <form id="emailConfigForm">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="emailServiceId" class="form-label">Service ID</label>
+                    <input type="text" class="form-control" id="emailServiceId" 
+                           placeholder="在EmailJS控制台中获取">
+                    <div class="form-text">EmailJS服务ID</div>
                 </div>
-                
-                <!-- 紧急联系人 -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-phone-alt me-2"></i>紧急联系人
-                    </div>
-                    <div class="card-body">
-                        <div id="emergencyContacts">
-                            <div class="emergency-contact p-2 border rounded bg-light">
-                                <strong>范伟森</strong>
-                                <div class="small">电话: 13800138000</div>
-                                <div class="small">职责: 负责人组协调</div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="emailTemplateId" class="form-label">Template ID</label>
+                    <input type="text" class="form-control" id="emailTemplateId" 
+                           placeholder="邮件模板ID">
+                    <div class="form-text">排班通知邮件模板ID</div>
                 </div>
-                
-                <!-- 系统状态 -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-info-circle me-2"></i>系统状态
-                    </div>
-                    <div class="card-body">
-                        <div class="small">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>数据完整性:</span>
-                                <span class="badge bg-success" id="dataIntegrityStatus">正常</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>最后备份:</span>
-                                <span id="lastBackupTime">从未备份</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>邮件功能:</span>
-                                <span id="emailStatus">未配置</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>系统版本:</span>
-                                <span>v4.2</span>
-                            </div>
-                        </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="emailUserId" class="form-label">User ID / Public Key</label>
+                    <input type="text" class="form-control" id="emailUserId" 
+                           placeholder="EmailJS用户ID">
+                    <div class="form-text">在Account → API Keys中查看</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3 pt-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="emailEnabled">
+                        <label class="form-check-label" for="emailEnabled">启用邮件通知</label>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        
+        <div class="mb-3">
+            <label class="form-label">测试邮件功能</label>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-primary" id="testEmailBtn">
+                    <i class="fas fa-paper-plane me-1"></i>发送测试邮件
+                </button>
+            </div>
+            <div class="form-text">向系统管理员发送测试邮件</div>
+        </div>
+        
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>重要提示：</strong><br>
+            1. EmailJS免费版每月200封邮件<br>
+            2. 建议使用公司邮箱作为发件人<br>
+            3. 邮件发送记录保存在EmailJS控制台
+        </div>
+    </form>
+</div>
 
     <!-- 日期详情模态框 -->
     <div class="modal fade day-detail-modal" id="dayDetailModal" tabindex="-1">
