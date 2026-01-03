@@ -2169,9 +2169,231 @@
             document.getElementById('travelFilterStatus').addEventListener('change', renderTravelList);
             
             // 邮件设置
-            document.getElementById('email-settings-tab').addEventListener('click', function() {
-                loadEmailConfig();
-            });
+            document.getElementById('email-settings-tab').addEventListener('click'， // ========== 邮件配置加载函数 ==========
+function loadEmailConfig() {
+    console.log('正在加载邮件配置...');
+    
+    // 获取表单元素
+    const serviceIdInput = document.getElementById('emailServiceId');
+    const templateIdInput = document.getElementById('emailTemplateId');
+    const userIdInput = document.getElementById('emailUserId');
+    const enabledCheckbox = document.getElementById('emailEnabled');
+    
+    // 检查元素是否存在
+    if (!serviceIdInput || !templateIdInput || !userIdInput || !enabledCheckbox) {
+        console.warn('邮件配置表单元素未找到');
+        return;
+    }
+    
+    // 加载保存的配置值
+    const config = systemConfig.emailConfig || {
+        serviceId: '',
+        templateId: '',
+        userId: '',
+        enabled: false
+    };
+    
+    serviceIdInput.value = config.serviceId || '';
+    templateIdInput.value = config.templateId || '';
+    userIdInput.value = config.userId || '';
+    enabledCheckbox.checked = config.enabled || false;
+    
+    console.log('邮件配置已加载:', {
+        serviceId: config.serviceId,
+        templateId: config.templateId,
+        userId: config.userId ? config.userId.substring(0, 10) + '...' : '未设置',
+        enabled: config.enabled
+    });
+    
+    // 更新配置状态显示
+    updateEmailConfigStatus();
+    
+    // 添加实时验证反馈
+    setupEmailConfigValidation();
+}
+
+// ========== 更新邮件配置状态显示 ==========
+function updateEmailConfigStatus() {
+    const serviceId = systemConfig.emailConfig?.serviceId || '';
+    const templateId = systemConfig.emailConfig?.templateId || '';
+    const userId = systemConfig.emailConfig?.userId || '';
+    const enabled = systemConfig.emailConfig?.enabled || false;
+    
+    // 创建或获取状态显示容器
+    let statusDiv = document.getElementById('emailConfigStatus');
+    if (!statusDiv) {
+        statusDiv = document.createElement('div');
+        statusDiv.id = 'emailConfigStatus';
+        statusDiv.className = 'mt-3';
+        
+        // 找到合适的位置插入（在警告框之后）
+        const warningAlert = document.querySelector('#email-settings .alert-warning');
+        if (warningAlert && warningAlert.parentNode) {
+            warningAlert.parentNode.insertBefore(statusDiv, warningAlert.nextSibling);
+        }
+    }
+    
+    // 检查配置完整性
+    const hasServiceId = serviceId && serviceId.startsWith('service_');
+    const hasTemplateId = templateId && templateId.startsWith('template_');
+    const hasUserId = userId && userId.startsWith('user_');
+    const isConfigured = hasServiceId && hasTemplateId && hasUserId;
+    
+    let statusHTML = '';
+    
+    if (enabled && isConfigured) {
+        statusHTML = `
+            <div class="alert alert-success small mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>邮件功能已配置并启用</strong>
+                <div class="mt-1 small">
+                    <div>Service ID: ${serviceId.substring(0, 20)}...</div>
+                    <div>Template ID: ${templateId.substring(0, 20)}...</div>
+                    <div>User ID: ${userId.substring(0, 20)}...</div>
+                </div>
+            </div>
+        `;
+    } else if (isConfigured && !enabled) {
+        statusHTML = `
+            <div class="alert alert-warning small mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>邮件功能已配置但未启用</strong>
+                <div class="mt-1 small">请勾选"启用邮件通知"以激活功能</div>
+            </div>
+        `;
+    } else {
+        let issues = [];
+        if (!hasServiceId) issues.push('Service ID');
+        if (!hasTemplateId) issues.push('Template ID');
+        if (!hasUserId) issues.push('User ID');
+        
+        statusHTML = `
+            <div class="alert alert-danger small mb-0">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>邮件功能未配置</strong>
+                <div class="mt-1 small">
+                    ${issues.length > 0 ? 
+                        `缺少: ${issues.join(', ')}` : 
+                        '请填写完整的EmailJS配置信息'
+                    }
+                </div>
+            </div>
+        `;
+    }
+    
+    statusDiv.innerHTML = statusHTML;
+}
+
+// ========== 设置邮件配置验证 ==========
+function setupEmailConfigValidation() {
+    const serviceIdInput = document.getElementById('emailServiceId');
+    const templateIdInput = document.getElementById('emailTemplateId');
+    const userIdInput = document.getElementById('emailUserId');
+    const enabledCheckbox = document.getElementById('emailEnabled');
+    
+    if (!serviceIdInput || !templateIdInput || !userIdInput) return;
+    
+    // 创建验证提示容器
+    let validationTips = document.getElementById('emailValidationTips');
+    if (!validationTips) {
+        validationTips = document.createElement('div');
+        validationTips.id = 'emailValidationTips';
+        validationTips.className = 'mt-2 small';
+        userIdInput.parentNode.appendChild(validationTips);
+    }
+    
+    // 验证函数
+    const validateAndUpdate = () => {
+        const serviceId = serviceIdInput.value.trim();
+        const templateId = templateIdInput.value.trim();
+        const userId = userIdInput.value.trim();
+        
+        let tips = [];
+        
+        // Service ID 验证
+        if (serviceId) {
+            if (!serviceId.startsWith('service_')) {
+                tips.push('Service ID应以"service_"开头');
+                serviceIdInput.classList.add('is-invalid');
+            } else {
+                serviceIdInput.classList.remove('is-invalid');
+                serviceIdInput.classList.add('is-valid');
+            }
+        } else {
+            serviceIdInput.classList.remove('is-valid', 'is-invalid');
+        }
+        
+        // Template ID 验证
+        if (templateId) {
+            if (!templateId.startsWith('template_')) {
+                tips.push('Template ID应以"template_"开头');
+                templateIdInput.classList.add('is-invalid');
+            } else {
+                templateIdInput.classList.remove('is-invalid');
+                templateIdInput.classList.add('is-valid');
+            }
+        } else {
+            templateIdInput.classList.remove('is-valid', 'is-invalid');
+        }
+        
+        // User ID 验证
+        if (userId) {
+            if (!userId.startsWith('user_')) {
+                tips.push('User ID应以"user_"开头');
+                userIdInput.classList.add('is-invalid');
+            } else {
+                userIdInput.classList.remove('is-invalid');
+                userIdInput.classList.add('is-valid');
+            }
+        } else {
+            userIdInput.classList.remove('is-valid', 'is-invalid');
+        }
+        
+        // 显示验证提示
+        if (tips.length > 0) {
+            validationTips.innerHTML = `
+                <div class="alert alert-warning small mb-0 p-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    ${tips.join('<br>')}
+                </div>
+            `;
+        } else if (serviceId && templateId && userId) {
+            validationTips.innerHTML = `
+                <div class="alert alert-success small mb-0 p-2">
+                    <i class="fas fa-check-circle me-1"></i>
+                    配置格式正确，可以发送测试邮件
+                </div>
+            `;
+        } else {
+            validationTips.innerHTML = `
+                <div class="alert alert-info small mb-0 p-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    请填写EmailJS配置信息
+                </div>
+            `;
+        }
+        
+        // 更新系统配置（实时保存）
+        systemConfig.emailConfig.serviceId = serviceId;
+        systemConfig.emailConfig.templateId = templateId;
+        systemConfig.emailConfig.userId = userId;
+        systemConfig.emailConfig.enabled = enabledCheckbox.checked;
+        
+        // 更新状态显示
+        updateEmailConfigStatus();
+    };
+    
+    // 为所有输入框添加事件监听
+    [serviceIdInput, templateIdInput, userIdInput, enabledCheckbox].forEach(input => {
+        if (input) {
+            input.addEventListener('input', validateAndUpdate);
+            input.addEventListener('change', validateAndUpdate);
+        }
+    });
+    
+    // 初始验证
+    setTimeout(validateAndUpdate, 100);
+}
             
             document.getElementById('testEmailBtn').addEventListener('click', sendTestEmail);
             
