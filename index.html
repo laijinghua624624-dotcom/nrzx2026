@@ -906,7 +906,13 @@
                         </div>
                     </div>
                 </div>
-                
+                <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                 <strong>重要提示：</strong><br>
+                 1. EmailJS免费版每月200封邮件<br>
+                 2. 建议使用公司邮箱作为发件人<br>
+                 3. 邮件发送记录保存在EmailJS控制台
+                </div>
                 <!-- 紧急联系人 -->
                 <div class="card">
                     <div class="card-header">
@@ -922,7 +928,20 @@
                         </div>
                     </div>
                 </div>
-                
+                <div class="alert alert-info mt-3">
+    <i class="fas fa-code me-2"></i>
+    <strong>EmailJS模板变量：</strong><br>
+    请在EmailJS模板中使用以下变量：<br>
+    • <code>{{to_name}}</code> - 收件人姓名<br>
+    • <code>{{to_email}}</code> - 收件人邮箱<br>
+    • <code>{{date}}</code> - 排班日期<br>
+    • <code>{{department}}</code> - 部门/组别<br>
+    • <code>{{shift_type}}</code> - 班次类型<br>
+    • <code>{{work_time}}</code> - 工作时间<br>
+    • <code>{{employee_name}}</code> - 员工姓名
+</div>
+
+<!-- 状态显示容器将在这里动态创建 -->
                 <!-- 系统状态 -->
                 <div class="card">
                     <div class="card-header">
@@ -2169,9 +2188,14 @@
             document.getElementById('travelFilterStatus').addEventListener('change', renderTravelList);
             
             // 邮件设置
-            document.getElementById('email-settings-tab').addEventListener('click'， // ========== 邮件配置加载函数 ==========
-function loadEmailConfig() {
-    console.log('正在加载邮件配置...');
+            // ========== 邮件设置选项卡点击事件 ==========
+document.getElementById('email-settings-tab').addEventListener('click', function() {
+    console.log('邮件设置选项卡被点击');
+    // 延迟执行以确保DOM已加载
+    setTimeout(() => {
+        loadEmailConfig();
+    }, 100);
+});
     
     // 获取表单元素
     const serviceIdInput = document.getElementById('emailServiceId');
@@ -3245,7 +3269,7 @@ function setupEmailConfigValidation() {
 
         function updateRotationOrder() {
             const selectedGroups = Array.from(document.querySelectorAll('.rotation-group-check:checked'))
-                .map(cb => cb.value);
+                。map(cb => cb.value);
             
             // 这里可以保存到系统配置
             // systemConfig.dutyGroupConfig.rotationOrder = selectedGroups;
